@@ -2,7 +2,7 @@ deploy:
   - name: create LaunchDarkly environment
     command: |
       curl -i -X POST "https://app.launchdarkly.com/api/v2/projects/${LAUNCHDARKLY_PROJECT_KEY}/environments" -H "Authorization: $LAUNCHDARKLY_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{ "color": "DADBEE", "key": "'"${OKTETO_NAMESPACE}"'", "name": "'"$OKTETO_NAMESPACE"'", "source": { "key": "'"$LAUNCHDARKLY_SOURCE"'" } }'
-      echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_environment_URL=https://app.launchdarkly.com/${LAUNCHDARKLY_PROJECT_KEY}/production/features" >> $OKTETO_ENV
+      echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_ENVIRONMENT_URL=https://app.launchdarkly.com/${LAUNCHDARKLY_PROJECT_KEY}/production/features" >> $OKTETO_ENV
 destroy:
   - name: delete LaunchDarkly environment
     command: |
