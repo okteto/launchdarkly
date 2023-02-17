@@ -7,8 +7,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ var createCmd = &cobra.Command{
 			return fmt.Errorf("failed to parse LaunchDarkly environment request")
 		}
 
-		request, err := http.NewRequest("POST", ldEnvironmentsURL, bytes.NewBuffer(marshaled))
+		request, err := retryablehttp.NewRequest("POST", ldEnvironmentsURL, bytes.NewBuffer(marshaled))
 		if err != nil {
 			return fmt.Errorf("failed to start the request to create LaunchDarkly environment: %w", err)
 		}
@@ -47,7 +47,7 @@ var createCmd = &cobra.Command{
 		request.Header.Set("Content-Type", "application/json; charset=UTF-8")
 		request.Header.Set("Authorization", ldToken)
 
-		client := &http.Client{}
+		client := getRetryableClient()
 		response, err := client.Do(request)
 		if err != nil {
 			return fmt.Errorf("failed to clone the LaunchDarkly environment: %w", err)
