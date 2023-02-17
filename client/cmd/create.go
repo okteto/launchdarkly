@@ -87,14 +87,15 @@ func createEnviroment(e environment, ldEnvironmentsURL string) (environment, err
 		return environment{}, fmt.Errorf(response.Status)
 	}
 
-	newEnv := environment{}
-	if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
-		return environment{}, fmt.Errorf("failed to decode environment from response: %w", err)
+	env, err := getExistingEnvironment()
+	if err != nil {
+		return environment{}, err
 	}
 
-	return newEnv, nil
+	return env, nil
 
 }
+
 func getExistingEnvironment() (environment, error) {
 	ldEnvironmentURL := getEnvironmentURL(ldProjectKey, ldEnvironmentName)
 	request, err := retryablehttp.NewRequest("GET", ldEnvironmentURL, nil)
