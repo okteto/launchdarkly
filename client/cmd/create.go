@@ -6,6 +6,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
@@ -13,6 +14,8 @@ import (
 )
 
 const colorOktetoGreen = "00d1ca"
+
+var errAlreadyExists = errors.New("environment already exists")
 
 var ldProjectSource string
 var ldEnvironmentColor string
@@ -35,48 +38,94 @@ var createCmd = &cobra.Command{
 			env.Source = environmentSource{Key: ldProjectSource}
 		}
 
-		marshaled, err := json.Marshal(env)
-		if err != nil {
-			return fmt.Errorf("failed to parse LaunchDarkly environment request")
+		e, err := createEnviroment(env, ldEnvironmentsURL)
+
+		if err == nil {
+			return publishResults(e)
 		}
 
-		request, err := retryablehttp.NewRequest("POST", ldEnvironmentsURL, bytes.NewBuffer(marshaled))
-		if err != nil {
-			return fmt.Errorf("failed to start the request to create LaunchDarkly environment: %w", err)
-		}
-
-		request.Header.Set("Content-Type", "application/json; charset=UTF-8")
-		request.Header.Set("Authorization", ldAccessToken)
-
-		client := getRetryableClient()
-		response, err := client.Do(request)
-		if err != nil {
-			return fmt.Errorf("failed to clone the LaunchDarkly environment: %w", err)
-		}
-
-		defer response.Body.Close()
-
-		if response.StatusCode == 409 {
-			// do nothing
-			return nil
-		}
-
-		if response.StatusCode < 300 || response.StatusCode == 409 {
-			var newEnvironment = environment{}
-			if err := json.NewDecoder(response.Body).Decode(&newEnvironment); err != nil {
-				return fmt.Errorf("failed to decode environment from response: %w", err)
+		if errors.Is(err, errAlreadyExists) {
+			e, err := getExistingEnvironment()
+			if err != nil {
+				return err
 			}
 
-			url := fmt.Sprintf("https://app.launchdarkly.com/%s/%s/features", ldProjectKey, ldEnvironmentName)
-			if err := generateNotes(url, newEnvironment.ID, newEnvironment.ApiKey, newEnvironment.MobileKey); err != nil {
-				return fmt.Errorf("failed to create notes: %w", err)
-			}
-			fmt.Print(url)
-			return nil
+			return publishResults(e)
 		}
 
-		return fmt.Errorf("failed to create the LaunchDarkly environment: %s", response.Status)
+		return fmt.Errorf("failed to create the LaunchDarkly environment: %w", err)
 	},
+}
+
+func createEnviroment(e environment, ldEnvironmentsURL string) (environment, error) {
+	marshaled, err := json.Marshal(e)
+	if err != nil {
+		return environment{}, fmt.Errorf("failed to parse LaunchDarkly environment request")
+	}
+
+	request, err := retryablehttp.NewRequest("POST", ldEnvironmentsURL, bytes.NewBuffer(marshaled))
+	if err != nil {
+		return environment{}, fmt.Errorf("failed to start the request to create LaunchDarkly environment: %w", err)
+	}
+
+	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	request.Header.Set("Authorization", ldAccessToken)
+
+	client := getRetryableClient()
+	response, err := client.Do(request)
+	if err != nil {
+		return environment{}, fmt.Errorf("failed to clone the LaunchDarkly environment: %w", err)
+	}
+
+	defer response.Body.Close()
+
+	if response.StatusCode == 409 {
+		return environment{}, errAlreadyExists
+	}
+
+	if response.StatusCode > 300 {
+		return environment{}, fmt.Errorf(response.Status)
+	}
+
+	newEnv := environment{}
+	if err := json.NewDecoder(response.Body).Decode(&e); err != nil {
+		return environment{}, fmt.Errorf("failed to decode environment from response: %w", err)
+	}
+
+	return newEnv, nil
+
+}
+func getExistingEnvironment() (environment, error) {
+	ldEnvironmentURL := getEnvironmentURL(ldProjectKey, ldEnvironmentName)
+	request, err := retryablehttp.NewRequest("GET", ldEnvironmentURL, nil)
+	if err != nil {
+		return environment{}, fmt.Errorf("failed to start the request to get a LaunchDarkly environment: %w", err)
+	}
+
+	request.Header.Set("Authorization", ldAccessToken)
+	client := getRetryableClient()
+	response, err := client.Do(request)
+	if err != nil {
+		return environment{}, fmt.Errorf("failed to get the LaunchDarkly environment: %w", err)
+	}
+
+	defer response.Body.Close()
+
+	var existingEnvironment = environment{}
+	if err := json.NewDecoder(response.Body).Decode(&existingEnvironment); err != nil {
+		return environment{}, fmt.Errorf("failed to decode environment from response: %w", err)
+	}
+
+	return existingEnvironment, nil
+}
+
+func publishResults(e environment) error {
+	url := getEnvironmentFeaturesURL(ldProjectKey, ldEnvironmentName)
+	if err := generateNotes(url, e.ID, e.ApiKey, e.MobileKey); err != nil {
+		return fmt.Errorf("failed to create notes: %w", err)
+	}
+	fmt.Print(url)
+	return nil
 }
 
 func init() {

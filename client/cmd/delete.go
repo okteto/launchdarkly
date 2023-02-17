@@ -14,7 +14,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete your LaunchDarkly environment",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ldEnvironmentURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments/%s", ldProjectKey, ldEnvironmentName)
+		ldEnvironmentURL := getEnvironmentURL(ldProjectKey, ldEnvironmentName)
 
 		request, err := retryablehttp.NewRequest("DELETE", ldEnvironmentURL, nil)
 		if err != nil {
