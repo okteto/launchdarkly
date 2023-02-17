@@ -11,5 +11,6 @@ destroy:
 external:
   LaunchDarkly:
     icon: dashboard
+    notes: notes.md
     endpoints:
       - name: environment

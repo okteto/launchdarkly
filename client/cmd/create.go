@@ -25,10 +25,13 @@ var createCmd = &cobra.Command{
 		ldEnvironmentsURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments", ldProjectKey)
 
 		var environment = environment{
-			Key:    ldName,
-			Name:   ldName,
-			Color:  color,
-			Source: environmentSource{Key: ldProjectSource},
+			Key:   ldName,
+			Name:  ldName,
+			Color: color,
+		}
+
+		if ldProjectSource != "" {
+			environment.Source = environmentSource{Key: ldProjectSource}
 		}
 
 		marshaled, err := json.Marshal(environment)
@@ -52,7 +55,7 @@ var createCmd = &cobra.Command{
 
 		defer response.Body.Close()
 
-		if response.StatusCode == 200 || response.StatusCode == 409 {
+		if response.StatusCode < 300 || response.StatusCode == 409 {
 			fmt.Printf("https://app.launchdarkly.com/%s/%s/features", ldProjectKey, ldName)
 			return nil
 		}
