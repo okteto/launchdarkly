@@ -25,17 +25,17 @@ var createCmd = &cobra.Command{
 
 		ldEnvironmentsURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments", ldProjectKey)
 
-		var environment = environment{
+		var env = environment{
 			Key:   ldEnvironmentName,
 			Name:  ldEnvironmentName,
 			Color: ldEnvironmentColor,
 		}
 
 		if ldProjectSource != "" {
-			environment.Source = environmentSource{Key: ldProjectSource}
+			env.Source = environmentSource{Key: ldProjectSource}
 		}
 
-		marshaled, err := json.Marshal(environment)
+		marshaled, err := json.Marshal(env)
 		if err != nil {
 			return fmt.Errorf("failed to parse LaunchDarkly environment request")
 		}
@@ -56,9 +56,19 @@ var createCmd = &cobra.Command{
 
 		defer response.Body.Close()
 
+		if response.StatusCode == 409 {
+			// do nothing
+			return nil
+		}
+
 		if response.StatusCode < 300 || response.StatusCode == 409 {
+			var newEnvironment = environment{}
+			if err := json.NewDecoder(response.Body).Decode(&newEnvironment); err != nil {
+				return fmt.Errorf("failed to decode environment from response: %w", err)
+			}
+
 			url := fmt.Sprintf("https://app.launchdarkly.com/%s/%s/features", ldProjectKey, ldEnvironmentName)
-			if err := generateNotes(url); err != nil {
+			if err := generateNotes(url, newEnvironment.ID, newEnvironment.ApiKey, newEnvironment.MobileKey); err != nil {
 				return fmt.Errorf("failed to create notes: %w", err)
 			}
 			fmt.Print(url)

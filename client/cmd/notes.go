@@ -12,7 +12,7 @@ var notes embed.FS
 
 const notesPath = "notes.md"
 
-func generateNotes(url string) error {
+func generateNotes(url, clientID, apiKey, mobileKey string) error {
 	tmpl, err := template.ParseFS(notes, "*.tmpl")
 	if err != nil {
 		return fmt.Errorf("failed to parse notes template: %w", err)
@@ -26,7 +26,10 @@ func generateNotes(url string) error {
 	defer f.Close()
 
 	config := map[string]string{
-		"url": url,
+		"Url":       url,
+		"SDKKey":    apiKey,
+		"MobileKey": mobileKey,
+		"ClientID":  clientID,
 	}
 
 	if err := tmpl.Execute(f, config); err != nil {
