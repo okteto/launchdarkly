@@ -1,0 +1,60 @@
+name: CI
+on: 
+  pull_request:
+    branches: main
+  push:
+    branches: 
+      - main
+  release:
+    types:
+      - published
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.19.x
+    - name: Test
+      run: make test
+      working-directory: client
+    - uses: azure/docker-login@v1
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Docker Buildx
+      uses: crazy-max/ghaction-docker-buildx@v3
+      with:
+        qemu-version: latest
+        buildx-version: latest
+    
+    - name: "Build"
+      working-directory: client
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          --output "type=image,push=false" \
+          --build-arg COMMIT_SHA=${{ github.sha }} -t launchdarkly:${{ github.sha }} .
+    - id: tag
+      name: Get the tag
+      run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+      if: ${{ github.event_name == 'release' }}
+    
+    - name: "Push"
+      working-directory: client
+      run: |
+        docker buildx build \
+          --platform linux/amd64,linux/arm64,linux/arm/v7 \
+          --output "type=image,push=true" \
+          --build-arg COMMIT_SHA=${{ github.sha }} -t ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.TAG }} .
+      if: ${{ github.event_name == 'release' }}
