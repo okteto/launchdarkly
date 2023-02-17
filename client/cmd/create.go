@@ -87,12 +87,12 @@ func createEnviroment(e environment, ldEnvironmentsURL string) (environment, err
 		return environment{}, fmt.Errorf(response.Status)
 	}
 
-	env, err := getExistingEnvironment()
-	if err != nil {
-		return environment{}, err
+	var newEnv environment
+	if err := json.NewDecoder(response.Body).Decode(&newEnv); err != nil {
+		return environment{}, fmt.Errorf("failed to decode the response of the LaunchDarkly API: %w", err)
 	}
 
-	return env, nil
+	return newEnv, nil
 
 }
 
