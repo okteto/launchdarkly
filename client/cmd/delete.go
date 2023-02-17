@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/spf13/cobra"
@@ -15,11 +14,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete your LaunchDarkly environment",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ldProjectKey := os.Getenv("LAUNCHDARKLY_PROJECT_KEY")
-		ldAccessToken := os.Getenv("LAUNCHDARKLY_ACCESS_TOKEN")
-		oktetoNamespace := os.Getenv("OKTETO_NAMESPACE")
-
-		ldEnvironmentURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments/%s", ldProjectKey, oktetoNamespace)
+		ldEnvironmentURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments/%s", ldProjectKey, ldEnvironmentName)
 
 		request, err := retryablehttp.NewRequest("DELETE", ldEnvironmentURL, nil)
 		if err != nil {
@@ -36,7 +31,7 @@ var deleteCmd = &cobra.Command{
 
 		defer response.Body.Close()
 
-		if response.StatusCode == 204 || response.StatusCode == 404 {
+		if response.StatusCode < 300 || response.StatusCode == 404 {
 			return nil
 		}
 

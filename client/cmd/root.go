@@ -15,9 +15,9 @@ var rootCmd = &cobra.Command{
 	Short: "Manage your LaunchDarkly environment as part of your Okteto environment",
 }
 
-var ldToken string
+var ldAccessToken string
 var ldProjectKey string
-var ldName string
+var ldEnvironmentName string
 
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -28,8 +28,12 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&ldToken, "token", "", "LaunchDarkly API Token")
+	rootCmd.PersistentFlags().StringVar(&ldAccessToken, "token", "", "LaunchDarkly API Token")
 	rootCmd.PersistentFlags().StringVar(&ldProjectKey, "project", "okteto", "LaunchDarkly Project Key")
-	rootCmd.PersistentFlags().StringVar(&ldName, "name", "okteto", "Name of the LaunchDarkly environment")
+	rootCmd.PersistentFlags().StringVar(&ldEnvironmentName, "name", "okteto", "Name of the LaunchDarkly environment")
+
+	rootCmd.MarkPersistentFlagRequired("token")
+	rootCmd.MarkPersistentFlagRequired("project")
+	rootCmd.MarkPersistentFlagRequired("name")
 
 }

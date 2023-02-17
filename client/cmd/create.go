@@ -12,7 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const colorOktetoGreen = "00d1ca"
+
 var ldProjectSource string
+var ldEnvironmentColor string
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
@@ -20,14 +23,12 @@ var createCmd = &cobra.Command{
 	Short: "Create a LaunchDarkly environment",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		color := "00d1ca"
-
 		ldEnvironmentsURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments", ldProjectKey)
 
 		var environment = environment{
-			Key:   ldName,
-			Name:  ldName,
-			Color: color,
+			Key:   ldEnvironmentName,
+			Name:  ldEnvironmentName,
+			Color: ldEnvironmentColor,
 		}
 
 		if ldProjectSource != "" {
@@ -45,7 +46,7 @@ var createCmd = &cobra.Command{
 		}
 
 		request.Header.Set("Content-Type", "application/json; charset=UTF-8")
-		request.Header.Set("Authorization", ldToken)
+		request.Header.Set("Authorization", ldAccessToken)
 
 		client := getRetryableClient()
 		response, err := client.Do(request)
@@ -56,7 +57,11 @@ var createCmd = &cobra.Command{
 		defer response.Body.Close()
 
 		if response.StatusCode < 300 || response.StatusCode == 409 {
-			fmt.Printf("https://app.launchdarkly.com/%s/%s/features", ldProjectKey, ldName)
+			url := fmt.Sprintf("https://app.launchdarkly.com/%s/%s/features", ldProjectKey, ldEnvironmentName)
+			if err := generateNotes(url); err != nil {
+				return fmt.Errorf("failed to create notes: %w", err)
+			}
+			fmt.Print(url)
 			return nil
 		}
 
@@ -67,6 +72,7 @@ var createCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	createCmd.Flags().StringVar(&ldProjectSource, "source", "production", "LaunchDarkly Project Source")
+	createCmd.Flags().StringVar(&ldProjectSource, "source", "", "LaunchDarkly Project Source")
+	createCmd.Flags().StringVar(&ldEnvironmentColor, "color", colorOktetoGreen, "The color of your LaunchDarkly environment")
 
 }
