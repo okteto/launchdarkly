@@ -1,60 +1,47 @@
-name: CI
-on: 
-  pull_request:
-    branches: main
+name: Create and publish a container image
+
+on:
   push:
-    branches: 
-      - main
-  release:
-    types:
-      - published
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'main'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  build-and-push-image:
     runs-on: ubuntu-latest
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.19.x
-    - name: Test
-      run: make test
-      working-directory: client
-    - uses: azure/docker-login@v1
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      packages: write
 
-    - name: Set up Docker Buildx
-      uses: crazy-max/ghaction-docker-buildx@v3
-      with:
-        qemu-version: latest
-        buildx-version: latest
-    
-    - name: "Build"
-      working-directory: client
-      run: |
-        docker buildx build \
-          --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          --output "type=image,push=false" \
-          --build-arg COMMIT_SHA=${{ github.sha }} -t launchdarkly:${{ github.sha }} .
-    - id: tag
-      name: Get the tag
-      run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
-      if: ${{ github.event_name == 'release' }}
-    
-    - name: "Push"
-      working-directory: client
-      run: |
-        docker buildx build \
-          --platform linux/amd64,linux/arm64,linux/arm/v7 \
-          --output "type=image,push=true" \
-          --build-arg COMMIT_SHA=${{ github.sha }} -t ghcr.io/${{ github.repository }}:${{ steps.tag.outputs.TAG }} .
-      if: ${{ github.event_name == 'release' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: client
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
