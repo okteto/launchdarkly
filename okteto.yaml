@@ -1,19 +1,22 @@
+build:
+  launchdarkly:
+    context: client
 deploy:
-  image: ghcr.io/okteto/launchdarkly:main
+  image: ${OKTETO_BUILD_LAUNCHDARKLY_IMAGE}
   commands:
   - name: create LaunchDarkly environment
     command: |
       set -e
-      LD_URL=$( /usr/local/bin/ create --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN --source $LAUNCHDARKLY_SOURCE)
+      LD_URL=$( /usr/local/bin/launchdarkly create --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN --source $LAUNCHDARKLY_SOURCE)
       [ -z "${LD_URL}" ] && exit 1
       echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_ENVIRONMENT_URL=$LD_URL" >> $OKTETO_ENV
 
 destroy:
-  image: ghcr.io/okteto/launchdarkly:main
+  image: ${OKTETO_BUILD_LAUNCHDARKLY_IMAGE}
   commands:
   - name: delete LaunchDarkly environment
     command: |
-       /usr/local/bin/ delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
+       /usr/local/bin/launchdarkly delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
 
 external:
   LaunchDarkly:

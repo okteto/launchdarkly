@@ -125,8 +125,12 @@ func publishResults(e environment) error {
 	if err := generateNotes(url, e.ID, e.ApiKey, e.MobileKey); err != nil {
 		return fmt.Errorf("failed to create notes: %w", err)
 	}
-	fmt.Print(url)
-	return nil
+
+	return generateResults(url, e.ID, e.ApiKey, e.MobileKey)
+}
+
+func writeEnvFile(e environment) error {
+
 }
 
 func init() {
