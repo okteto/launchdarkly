@@ -1,5 +1,5 @@
 deploy:
-  image: okteto/launchdarkly:main
+  image: ghcr.io/okteto/launchdarkly:main
   commands:
   - name: create LaunchDarkly environment
     command: |
@@ -9,7 +9,7 @@ deploy:
       echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_ENVIRONMENT_URL=$LD_URL" >> $OKTETO_ENV
 
 destroy:
-  image: okteto/launchdarkly:main
+  image: ghcr.io/okteto/launchdarkly:main
   commands:
   - name: delete LaunchDarkly environment
     command: |
