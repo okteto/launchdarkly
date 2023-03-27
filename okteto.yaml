@@ -4,7 +4,7 @@ deploy:
   - name: create LaunchDarkly environment
     command: |
       set -e
-      LD_URL=$(./launchdarkly create --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN --source $LAUNCHDARKLY_SOURCE)
+      LD_URL=$( /usr/local/bin/ create --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN --source $LAUNCHDARKLY_SOURCE)
       [ -z "${LD_URL}" ] && exit 1
       echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_ENVIRONMENT_URL=$LD_URL" >> $OKTETO_ENV
 
@@ -13,7 +13,7 @@ destroy:
   commands:
   - name: delete LaunchDarkly environment
     command: |
-      ./launchdarkly delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
+       /usr/local/bin/ delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
 
 external:
   LaunchDarkly:
