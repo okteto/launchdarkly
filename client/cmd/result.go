@@ -12,7 +12,7 @@ var result embed.FS
 
 const resultsPath = "ld_results.env"
 
-func generateResults(url, clientID, apiKey, mobileKey string) error {
+func generateResultsFile(url, clientID, apiKey, mobileKey string) error {
 	tmpl, err := template.ParseFS(result, "*.tmpl")
 	if err != nil {
 		return fmt.Errorf("failed to parse result template: %w", err)
@@ -33,7 +33,7 @@ func generateResults(url, clientID, apiKey, mobileKey string) error {
 	}
 
 	if err := tmpl.Execute(f, config); err != nil {
-		return fmt.Errorf("failed to write notes file: %w", err)
+		return fmt.Errorf("failed to write results file: %w", err)
 	}
 
 	return nil

@@ -26,6 +26,8 @@ var createCmd = &cobra.Command{
 	Short: "Create a LaunchDarkly environment",
 	RunE: func(cmd *cobra.Command, args []string) error {
 
+		fmt.Println("Creating your LaunchDarkly environment")
+
 		ldEnvironmentsURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments", ldProjectKey)
 
 		var env = environment{
@@ -41,16 +43,24 @@ var createCmd = &cobra.Command{
 		e, err := createEnviroment(env, ldEnvironmentsURL)
 
 		if err == nil {
+			fmt.Println("Successfully created you LaunchDarkly environment: ", getEnvironmentURL(ldProjectKey, e.Name))
 			return publishResults(e)
 		}
 
 		if errors.Is(err, errAlreadyExists) {
+			fmt.Println("LaunchDarkly environment already exists")
 			e, err := getExistingEnvironment()
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get existing LaunchDarkly environment: %w", err)
 			}
 
-			return publishResults(e)
+			err = publishResults(e)
+			if err != nil {
+				return fmt.Errorf("failed to get information about existing LaunchDarkly environment: %w", err)
+			}
+
+			fmt.Println("Successfully generated the configuration for your LaunchDarkly environment")
+			return nil
 		}
 
 		return fmt.Errorf("failed to create the LaunchDarkly environment: %w", err)
@@ -122,15 +132,11 @@ func getExistingEnvironment() (environment, error) {
 
 func publishResults(e environment) error {
 	url := getEnvironmentFeaturesURL(ldProjectKey, ldEnvironmentName)
-	if err := generateNotes(url, e.ID, e.ApiKey, e.MobileKey); err != nil {
+	if err := generateNotesFile(url, e.ID, e.ApiKey, e.MobileKey); err != nil {
 		return fmt.Errorf("failed to create notes: %w", err)
 	}
 
-	return generateResults(url, e.ID, e.ApiKey, e.MobileKey)
-}
-
-func writeEnvFile(e environment) error {
-
+	return generateResultsFile(url, e.ID, e.ApiKey, e.MobileKey)
 }
 
 func init() {
