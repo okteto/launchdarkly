@@ -1,3 +1,5 @@
+icon: https://raw.githubusercontent.com/okteto/launchdarkly/main/icon.png
+
 build:
     launchdarkly:
       context: client
