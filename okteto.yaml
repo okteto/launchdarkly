@@ -13,7 +13,6 @@ build:
         kubectl create secret generic okteto-launchdarkly --save-config --dry-run=client --from-env-file=ld_results.env -oyaml | kubectl apply -f -
   
   destroy:
-    image: ghcr.io/okteto/launchdarkly:main
     commands:
     - name: delete LaunchDarkly environment
       command: |

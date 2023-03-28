@@ -6,9 +6,11 @@ Use this integration to tell Okteto to include a LaunchDarkly environment in you
 
 To use it:
 1. Add the following secrets to your Okteto instance: 
-    - LAUNCHDARKLY_ACCESS_TOKEN: A token with read/write access to your LaunchDarkly project.
-    - LAUNCHDARKLY_PROJECT_KEY: The key of your LaunchDarkly project.
-    - LAUNCHDARKLY_SOURCE: The key of the environment you want to clone (optional).
+
+    - `LAUNCHDARKLY_ACCESS_TOKEN`: A token with read/write access to your LaunchDarkly project.
+    - `LAUNCHDARKLY_PROJECT_KEY`: The key of your LaunchDarkly project.
+    - `LAUNCHDARKLY_SOURCE`: The key of the environment you want to clone (optional).
+
 2. Update your manifest with the configuration below:
     ```yaml
     ...
