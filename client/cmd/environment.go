@@ -23,5 +23,5 @@ func getEnvironmentURL(project, name string) string {
 }
 
 func getEnvironmentFeaturesURL(project, name string) string {
-	return fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments/%s/features", project, name)
+	return fmt.Sprintf("https://app.launchdarkly.com/%s/%s/features", project, name)
 }
