@@ -20,7 +20,7 @@ destroy:
         /usr/local/bin/launchdarkly delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
 
 external:
-  LaunchDarkly:
+  launchdarkly:
     icon: dashboard
     notes: notes.md
     endpoints:
