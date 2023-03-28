@@ -25,7 +25,7 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a LaunchDarkly environment",
 	RunE: func(cmd *cobra.Command, args []string) error {
-
+		cmd.SilenceUsage = true
 		fmt.Println("Creating your LaunchDarkly environment")
 
 		ldEnvironmentsURL := fmt.Sprintf("https://app.launchdarkly.com/api/v2/projects/%s/environments", ldProjectKey)
