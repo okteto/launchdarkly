@@ -1,30 +1,27 @@
 build:
-  launchdarkly:
-    context: client
-deploy:
-  image: ${OKTETO_BUILD_LAUNCHDARKLY_IMAGE}
-  commands:
-  - name: create LaunchDarkly environment
-    command: |
-      set -e
-      /usr/local/bin/launchdarkly create --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN --source $LAUNCHDARKLY_SOURCE
-      . ./ld_results.env
-      echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_ENVIRONMENT_URL=$LAUNCHDARKLY_ENVIRONMENT_URL" >> $OKTETO_ENV
-      echo "LAUNCHDARKLY_ENVIRONMENT_URL=$LAUNCHDARKLY_ENVIRONMENT_URL" >> $OKTETO_ENV
-      echo "LAUNCHDARKLY_SDK_KEY=$LAUNCHDARKLY_SDK_KEY" >> $OKTETO_ENV
-      echo "LAUNCHDARKLY_MOBILE_KEY=$LAUNCHDARKLY_MOBILE_KEY" >> $OKTETO_ENV
-      echo "LAUNCHDARKLY_CLIENT_ID=$LAUNCHDARKLY_CLIENT_ID" >> $OKTETO_ENV
-
-destroy:
-  image: ghcr.io/okteto/launchdarkly:main
-  commands:
-  - name: delete LaunchDarkly environment
-    command: |
-       /usr/local/bin/launchdarkly delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
-
-external:
-  LaunchDarkly:
-    icon: dashboard
-    notes: notes.md
-    endpoints:
-      - name: environment
+    launchdarkly:
+      context: client
+  deploy:
+    image: ${OKTETO_BUILD_LAUNCHDARKLY_IMAGE}
+    commands:
+    - name: create LaunchDarkly environment
+      command: |
+        set -e
+        /usr/local/bin/launchdarkly create --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN --source $LAUNCHDARKLY_SOURCE
+        . ./ld_results.env
+        echo "OKTETO_EXTERNAL_LAUNCHDARKLY_ENDPOINTS_ENVIRONMENT_URL=$LAUNCHDARKLY_ENVIRONMENT_URL" >> $OKTETO_ENV
+        kubectl create secret generic okteto-launchdarkly --save-config --dry-run=client --from-env-file=ld_results.env -oyaml | kubectl apply -f -
+  
+  destroy:
+    image: ghcr.io/okteto/launchdarkly:main
+    commands:
+    - name: delete LaunchDarkly environment
+      command: |
+         /usr/local/bin/launchdarkly delete --project $LAUNCHDARKLY_PROJECT_KEY --name $OKTETO_NAMESPACE --token $LAUNCHDARKLY_ACCESS_TOKEN
+  
+  external:
+    LaunchDarkly:
+      icon: dashboard
+      notes: notes.md
+      endpoints:
+        - name: environment
